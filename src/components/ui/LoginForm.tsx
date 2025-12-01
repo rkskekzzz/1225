@@ -118,7 +118,7 @@ export default function LoginForm() {
       </div>
 
       {/* Top/Left side - Preview Calendar */}
-      <div className="min-h-0 flex-shrink lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden z-10">
+      <div className="min-h-0 flex-grow lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden z-10">
         {/* 3D Calendar Preview */}
         <div className="relative w-full h-full">
           {calendarData && (
@@ -130,7 +130,7 @@ export default function LoginForm() {
         </div>
 
         {/* Image Credit */}
-        <div className="absolute bottom-16 lg:bottom-20 right-4 z-20 text-[10px] lg:text-xs text-white/60 bg-black/30 backdrop-blur-sm px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg">
+        <div className="absolute bottom-8 lg:bottom-16 right-4 z-20 text-[10px] lg:text-xs text-white/60 bg-black/30 backdrop-blur-sm px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg">
           사진:{" "}
           <a
             href="https://unsplash.com/ko/%EC%82%AC%EC%A7%84/%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4-%ED%8A%B8%EB%A6%AC%EC%97%90-%EC%8B%B8%EA%B5%AC%EB%A0%A4%EC%9D%98-%EA%B7%BC%EC%A0%91-%EC%B4%AC%EC%98%81-%EC%82%AC%EC%A7%84-SUTfFCAHV_A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
@@ -152,9 +152,9 @@ export default function LoginForm() {
         </div>
 
         {/* Controls Guide */}
-        <div className="absolute bottom-4 right-4 z-10">
-          <div className="bg-white/10 backdrop-blur-md rounded-lg lg:rounded-xl border border-white/20 px-2 py-1.5 lg:px-3 lg:py-2 shadow-2xl">
-            <div className="flex items-center gap-2 lg:gap-3 text-white/90">
+        <div className="absolute bottom-0 lg:bottom-4 right-4 z-10">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg lg:rounded-xl border border-white/20 px-1.5 py-1 lg:px-2 lg:py-1.5 shadow-2xl">
+            <div className="flex items-center gap-1.5 lg:gap-2 text-white/90">
               {/* Drag to Rotate */}
               <div className="flex items-center gap-1 lg:gap-1.5">
                 <div className="w-5 h-5 lg:w-6 lg:h-6 bg-white/20 rounded-md flex items-center justify-center">
@@ -197,7 +197,7 @@ export default function LoginForm() {
       </div>
 
       {/* Bottom/Right side - Login Form */}
-      <div className="flex-grow lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto z-10">
+      <div className="h-fit lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto z-10">
         <div className="relative bg-white/5 backdrop-blur-xl p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10">
           {/* Logo */}
           <div className="flex flex-col items-center mb-6 lg:mb-8">

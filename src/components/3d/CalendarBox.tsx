@@ -31,6 +31,28 @@ export function CalendarBox() {
   const idleStartTime = useRef<number | null>(null);
   const idleAmplitude = useRef(0); // fade-in을 위한 amplitude
 
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    // Check if user has visited before
+    const hasVisited = localStorage.getItem("hasVisited");
+    if (!hasVisited) {
+      // Delay slightly to let the scene load
+      const timer = setTimeout(() => {
+        setShowTutorial(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleTutorialInteract = () => {
+    if (showTutorial) {
+      setShowTutorial(false);
+      localStorage.setItem("hasVisited", "true");
+    }
+  };
+
   // Zoom state - responsive initial zoom based on aspect ratio
   const getInitialZoom = () => {
     if (typeof window !== "undefined") {
@@ -330,6 +352,8 @@ export function CalendarBox() {
         size={[cellWidth, cellHeight, 0.02]} // Door thickness 0.02 (very thin)
         frontTexture={frontTexture}
         shape={doorShape}
+        isTutorial={showTutorial && day === 1}
+        onInteract={handleTutorialInteract}
       />
     );
   });

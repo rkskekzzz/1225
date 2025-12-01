@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useTexture, Text } from "@react-three/drei";
+import { useTexture, Text, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useCalendarStore } from "@/store";
 
@@ -10,12 +10,22 @@ interface DoorProps {
   size: [number, number, number]; // width, height, depth
   frontTexture: THREE.Texture | null;
   shape: "square" | "circle";
+  isTutorial?: boolean;
+  onInteract?: () => void;
 }
 
 const FALLBACK_TEXTURE =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
+export function Door({
+  day,
+  position,
+  size,
+  frontTexture,
+  shape,
+  isTutorial,
+  onInteract,
+}: DoorProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { openedDays, toggleDay, setViewingDay, isPreviewMode } =
     useCalendarStore();
@@ -144,7 +154,9 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
       );
 
       // Animate hover scale (잠긴 날짜는 scale 효과 없음)
-      const targetScale = isHovered && !isOpen && isUnlocked ? 1.08 : 1.0;
+      // 튜토리얼 상태일 때도 살짝 커져있게 함 (주목도 향상)
+      const targetScale =
+        (isHovered || isTutorial) && !isOpen && isUnlocked ? 1.08 : 1.0;
       const currentScale = groupRef.current.scale.x;
       const newScale = THREE.MathUtils.lerp(
         currentScale,
@@ -191,6 +203,7 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
 
     if (!isOpen) {
       toggleDay(day);
+      if (onInteract) onInteract();
       // Delay modal to show opening animation
       setTimeout(() => {
         setViewingDay(day);
@@ -239,26 +252,42 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
             <meshStandardMaterial
               attach="material-0"
               color="#8B4513"
-              emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+              emissive={
+                (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+              }
+              emissiveIntensity={
+                (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+              }
             />
             <meshStandardMaterial
               attach="material-1"
               color="#8B4513"
-              emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+              emissive={
+                (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+              }
+              emissiveIntensity={
+                (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+              }
             />
             <meshStandardMaterial
               attach="material-2"
               color="#8B4513"
-              emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+              emissive={
+                (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+              }
+              emissiveIntensity={
+                (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+              }
             />
             <meshStandardMaterial
               attach="material-3"
               color="#8B4513"
-              emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+              emissive={
+                (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+              }
+              emissiveIntensity={
+                (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+              }
             />
             <meshStandardMaterial
               attach="material-4"
@@ -273,21 +302,27 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
                   : "white"
               }
               emissive={
-                isHovered && !isOpen
+                (isHovered || isTutorial) && !isOpen
                   ? isUnlocked
                     ? "#ffaa66"
                     : "#000000"
                   : "#000000"
               }
-              emissiveIntensity={isHovered && !isOpen && isUnlocked ? 0.4 : 0}
+              emissiveIntensity={
+                ((isHovered || isTutorial) && !isOpen && isUnlocked) ? 0.4 : 0
+              }
               opacity={isUnlocked ? 1 : isHovered ? 0.5 : 1}
               transparent={!isUnlocked && isHovered}
             />
             <meshStandardMaterial
               attach="material-5"
               color="#5c3a21"
-              emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+              emissive={
+                (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+              }
+              emissiveIntensity={
+                (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+              }
             />
           </mesh>
         ) : (
@@ -314,13 +349,15 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
                     : "white"
                 }
                 emissive={
-                  isHovered && !isOpen
+                  (isHovered || isTutorial) && !isOpen
                     ? isUnlocked
                       ? "#ffaa66"
                       : "#000000"
                     : "#000000"
                 }
-                emissiveIntensity={isHovered && !isOpen && isUnlocked ? 0.4 : 0}
+                emissiveIntensity={
+                  ((isHovered || isTutorial) && !isOpen && isUnlocked) ? 0.4 : 0
+                }
                 opacity={isUnlocked ? 1 : isHovered ? 0.5 : 1}
                 transparent={!isUnlocked && isHovered}
               />
@@ -336,8 +373,12 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
               <circleGeometry args={[width * 0.45, 32]} />
               <meshStandardMaterial
                 color="#5c3a21"
-                emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-                emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+                emissive={
+                  (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+                }
+                emissiveIntensity={
+                  (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+                }
               />
             </mesh>
 
@@ -349,8 +390,12 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
               <meshStandardMaterial
                 color="#8B4513"
                 side={THREE.DoubleSide}
-                emissive={isHovered && !isOpen ? "#ff8844" : "#000000"}
-                emissiveIntensity={isHovered && !isOpen ? 0.3 : 0}
+                emissive={
+                  (isHovered || isTutorial) && !isOpen ? "#ff8844" : "#000000"
+                }
+                emissiveIntensity={
+                  (isHovered || isTutorial) && !isOpen ? 0.3 : 0
+                }
               />
             </mesh>
           </group>
@@ -370,7 +415,7 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
         )}
 
         {/* Hover Text */}
-        {isHovered && !isOpen && (
+        {isHovered && !isOpen && !isTutorial && (
           <Text
             position={[width / 2, 0, depth / 2 + 0.02]}
             fontSize={width * 0.12}
@@ -381,6 +426,24 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
           >
             {isUnlocked ? "클릭해서 열기" : getLockedMessage()}
           </Text>
+        )}
+
+        {/* Tutorial Tooltip */}
+        {isTutorial && !isOpen && (
+          <Html
+            position={[width / 2, height / 2, depth / 2]}
+            center
+            style={{ pointerEvents: "none" }}
+            zIndexRange={[100, 0]}
+          >
+            <div className="relative flex flex-col items-center animate-bounce">
+              <div className="bg-white text-slate-900 px-3 py-2 rounded-xl shadow-xl border border-emerald-500/30 whitespace-nowrap text-sm font-bold flex items-center gap-2">
+                <span>날짜에 맞는 칸을 클릭해서 열어보세요</span>
+                <span className="text-lg">🎁</span>
+              </div>
+              <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white mt-[-1px]"></div>
+            </div>
+          </Html>
         )}
       </group>
 
