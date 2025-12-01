@@ -12,7 +12,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 const FALLBACK_TEXTURE =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-export function CalendarBox() {
+interface CalendarBoxProps {
+  onLockedDayClick?: (day: number) => void;
+}
+
+export function CalendarBox({ onLockedDayClick }: CalendarBoxProps) {
   const { mainImage, doorShape } = useCalendarStore();
   const [processedTextures, setProcessedTextures] =
     useState<ProcessedBoxTextures | null>(null);
@@ -425,6 +429,7 @@ export function CalendarBox() {
         shape={doorShape}
         isTutorial={showTutorial && day === 1}
         onInteract={handleTutorialInteract}
+        onLockedAttempt={onLockedDayClick}
       />
     );
   });

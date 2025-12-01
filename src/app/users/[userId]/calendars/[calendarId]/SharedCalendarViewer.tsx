@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Scene from "@/components/3d/Scene";
 import DayModal from "@/components/ui/DayModal";
@@ -14,6 +14,7 @@ import {
   MousePointer2,
   Plus,
 } from "lucide-react";
+import { Toast } from "@/components/ui/Toast";
 
 interface CalendarData {
   id: string;
@@ -41,6 +42,34 @@ export default function SharedCalendarViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const toastTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const hideToast = () => {
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+      toastTimer.current = null;
+    }
+    setShowToast(false);
+  };
+
+  const showLockedDayToast = (day: number) => {
+    hideToast();
+
+    setToastMessage(`12월 ${day}일 이후 열 수 있습니다 🎁`);
+    setShowToast(true);
+
+    toastTimer.current = setTimeout(() => {
+      setShowToast(false);
+    }, 2400);
+  };
+
+  useEffect(() => {
+    return () => {
+      hideToast();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchCalendar = async () => {
@@ -117,6 +146,11 @@ export default function SharedCalendarViewer({
 
   return (
     <>
+      <Toast
+        message={toastMessage}
+        show={showToast}
+        onClose={hideToast}
+      />
       <main className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-20 p-4">
@@ -169,7 +203,7 @@ export default function SharedCalendarViewer({
 
         {/* 3D Scene */}
         <div className="absolute inset-0 z-0">
-          <Scene />
+          <Scene onLockedDayClick={showLockedDayToast} />
         </div>
 
         {/* Day Modal */}

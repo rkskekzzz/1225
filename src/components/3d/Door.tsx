@@ -12,6 +12,7 @@ interface DoorProps {
   shape: "square" | "circle";
   isTutorial?: boolean;
   onInteract?: () => void;
+  onLockedAttempt?: (day: number) => void;
 }
 
 const FALLBACK_TEXTURE =
@@ -25,6 +26,7 @@ export function Door({
   shape,
   isTutorial,
   onInteract,
+  onLockedAttempt,
 }: DoorProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { openedDays, toggleDay, setViewingDay, isPreviewMode } =
@@ -198,6 +200,9 @@ export function Door({
 
     // 잠긴 날짜는 열 수 없음
     if (!isUnlocked) {
+      if (onLockedAttempt) {
+        onLockedAttempt(day);
+      }
       return;
     }
 
