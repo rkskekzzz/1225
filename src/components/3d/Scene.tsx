@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import {
   Environment,
   ContactShadows,
@@ -9,7 +9,7 @@ import {
   useTexture,
 } from "@react-three/drei";
 import { CalendarBox } from "./CalendarBox";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useCalendarStore } from "@/store";
 
 const DEFAULT_BACKGROUND = "/image.jpeg";
@@ -17,20 +17,51 @@ const DEFAULT_BACKGROUND = "/image.jpeg";
 // 3D 배경 평면 컴포넌트
 function BackgroundPlane({ imageUrl }: { imageUrl: string }) {
   const texture = useTexture(imageUrl);
+  const { viewport } = useThree();
 
-  // 카메라 설정: FOV=50, maxZoom=80 (가장 멀리)
-  // 카메라가 z=80일 때 화면을 꽉 채우려면:
-  // visible height = 2 * Math.tan((FOV * Math.PI / 180) / 2) * distance
-  // distance = 80 - (-30) = 110
-  // visible height = 2 * Math.tan(25° * π/180) * 110 ≈ 102
-  // 와이드 스크린(16:9)을 고려하여 width는 더 크게
-  // visible width ≈ 102 * (16/9) ≈ 181
-  // 여유를 두고 250x250으로 설정하여 모든 비율에서 커버
-  const backgroundSize = 250;
+  // 이미지 원본 비율 계산
+  const imageAspect = useMemo(() => {
+    if (texture.image) {
+      return texture.image.width / texture.image.height;
+    }
+    return 1;
+  }, [texture]);
+
+  // 최대 줌아웃(z=80)일 때 화면을 꽉 채우도록 크기 계산
+  // FOV=50, 배경 평면 z=-30, 최대 줌아웃 시 카메라 z=80
+  // 거리 = 80 - (-30) = 110
+  const maxZoomDistance = 110;
+  const fov = 50;
+
+  // 최대 줌아웃 시 보이는 영역 크기
+  const visibleHeight =
+    2 * Math.tan((fov * Math.PI) / 180 / 2) * maxZoomDistance;
+  const screenAspect = viewport.width / viewport.height;
+  const visibleWidth = visibleHeight * screenAspect;
+
+  // 이미지 비율을 유지하면서 화면을 꽉 채우는 크기 계산
+  // cover 방식: 화면보다 이미지가 더 넓거나 높으면 잘리지만 빈 공간 없음
+  const planeSize = useMemo(() => {
+    let width: number;
+    let height: number;
+
+    if (imageAspect > screenAspect) {
+      // 이미지가 화면보다 더 넓음 -> 높이 기준으로 맞춤
+      height = visibleHeight;
+      width = height * imageAspect;
+    } else {
+      // 이미지가 화면보다 더 좁음 -> 너비 기준으로 맞춤
+      width = visibleWidth;
+      height = width / imageAspect;
+    }
+
+    // 약간의 여유를 두어 확실히 커버되도록
+    return { width: width * 1.05, height: height * 1.05 };
+  }, [imageAspect, screenAspect, visibleWidth, visibleHeight]);
 
   return (
     <mesh position={[0, 0, -30]}>
-      <planeGeometry args={[backgroundSize, backgroundSize]} />
+      <planeGeometry args={[planeSize.width, planeSize.height]} />
       <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
   );
