@@ -51,7 +51,7 @@ export default function SharedCalendarViewer() {
           viewingDay: null,
         });
 
-        setPreviewMode(true);
+        setPreviewMode(false); // 공유 링크는 실제 캘린더이므로 날짜 제한 적용
       } catch (err) {
         console.error("캘린더 로딩 오류:", err);
         setError("캘린더를 불러오는데 실패했습니다");

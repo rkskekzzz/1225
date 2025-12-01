@@ -25,6 +25,74 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
   // Track mouse position to detect drag vs click
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
 
+  // 현재 날짜 확인 (12월 기준)
+  const getCurrentDecemberDay = () => {
+    const now = new Date();
+    const month = now.getMonth(); // 0-11
+    const date = now.getDate();
+
+    // 12월인 경우에만 실제 날짜 반환, 아니면 테스트를 위해 25일로 설정
+    if (month === 11) {
+      // 11 = 12월
+      return date;
+    }
+    // 12월이 아닌 경우 모든 날짜 허용 (테스트 목적)
+    return 25;
+  };
+
+  const isUnlocked = isPreviewMode || day <= getCurrentDecemberDay();
+
+  // 잠긴 날짜 hover 메시지 (날짜 차이에 따라)
+  const getLockedMessage = () => {
+    const currentDay = getCurrentDecemberDay();
+    const daysUntil = day - currentDay;
+
+    // 크리스마스 이브 (24일)
+    if (day === 24) {
+      const messages = ["이브 대기중🎅", "특별한 밤💫", "이브까지 기다려✨"];
+      return messages[day % messages.length];
+    }
+
+    // 크리스마스 당일 (25일)
+    if (day === 25) {
+      const messages = ["메리크리스마스🎄", "크리스마스🎁", "특별한 날🌟"];
+      return messages[day % messages.length];
+    }
+
+    // 내일 (1일 차이)
+    if (daysUntil === 1) {
+      const messages = [
+        "내일 봐!🎁",
+        "하루만 더!💝",
+        "내일 만나✨",
+        "곧이야!🎉",
+      ];
+      return messages[day % messages.length];
+    }
+
+    // 가까운 미래 (2-6일)
+    if (daysUntil >= 2 && daysUntil <= 6) {
+      const messages = [
+        "조금만 기다려!✨",
+        "곧 만나!🎀",
+        "아직 안돼!🙈",
+        "금방이야!💫",
+        "기다려줘!🎁",
+      ];
+      return messages[day % messages.length];
+    }
+
+    // 먼 미래 (7일 이상)
+    const messages = [
+      "천천히 와!🐢",
+      "서두르지 마!⏰",
+      "여유 가져!☕",
+      "기다림도 좋아🌙",
+      "참을성!💪",
+    ];
+    return messages[day % messages.length];
+  };
+
   const textureClone = useMemo(() => {
     if (!frontTexture) return null;
 
@@ -75,8 +143,8 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
         delta * 5
       );
 
-      // Animate hover scale
-      const targetScale = isHovered && !isOpen ? 1.08 : 1.0;
+      // Animate hover scale (잠긴 날짜는 scale 효과 없음)
+      const targetScale = isHovered && !isOpen && isUnlocked ? 1.08 : 1.0;
       const currentScale = groupRef.current.scale.x;
       const newScale = THREE.MathUtils.lerp(
         currentScale,
@@ -110,6 +178,11 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
 
     mouseDownPos.current = null;
 
+    // 잠긴 날짜는 열 수 없음
+    if (!isUnlocked) {
+      return;
+    }
+
     if (!isOpen) {
       toggleDay(day);
       // Delay modal to show opening animation
@@ -125,7 +198,13 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
     setIsHovered(true);
-    document.body.style.cursor = "pointer";
+
+    // 잠긴 날짜는 기본 커서 유지
+    if (isUnlocked) {
+      document.body.style.cursor = "pointer";
+    } else {
+      document.body.style.cursor = "not-allowed";
+    }
   };
 
   const handlePointerOut = (e: any) => {
@@ -178,9 +257,25 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
             <meshStandardMaterial
               attach="material-4"
               map={textureClone}
-              color={!frontTexture ? "#ccaa88" : "white"}
-              emissive={isHovered && !isOpen ? "#ffaa66" : "#000000"}
-              emissiveIntensity={isHovered && !isOpen ? 0.4 : 0}
+              color={
+                !frontTexture
+                  ? "#ccaa88"
+                  : isUnlocked
+                  ? "white"
+                  : isHovered
+                  ? "#666666"
+                  : "white"
+              }
+              emissive={
+                isHovered && !isOpen
+                  ? isUnlocked
+                    ? "#ffaa66"
+                    : "#000000"
+                  : "#000000"
+              }
+              emissiveIntensity={isHovered && !isOpen && isUnlocked ? 0.4 : 0}
+              opacity={isUnlocked ? 1 : isHovered ? 0.5 : 1}
+              transparent={!isUnlocked && isHovered}
             />
             <meshStandardMaterial
               attach="material-5"
@@ -203,9 +298,25 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
               <circleGeometry args={[width * 0.45, 32]} />
               <meshStandardMaterial
                 map={textureClone}
-                color={!frontTexture ? "#ccaa88" : "white"}
-                emissive={isHovered && !isOpen ? "#ffaa66" : "#000000"}
-                emissiveIntensity={isHovered && !isOpen ? 0.4 : 0}
+                color={
+                  !frontTexture
+                    ? "#ccaa88"
+                    : isUnlocked
+                    ? "white"
+                    : isHovered
+                    ? "#666666"
+                    : "white"
+                }
+                emissive={
+                  isHovered && !isOpen
+                    ? isUnlocked
+                      ? "#ffaa66"
+                      : "#000000"
+                    : "#000000"
+                }
+                emissiveIntensity={isHovered && !isOpen && isUnlocked ? 0.4 : 0}
+                opacity={isUnlocked ? 1 : isHovered ? 0.5 : 1}
+                transparent={!isUnlocked && isHovered}
               />
             </mesh>
 
@@ -256,13 +367,13 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
         {isHovered && !isOpen && (
           <Text
             position={[width / 2, 0, depth / 2 + 0.02]}
-            fontSize={width * 0.1}
-            color="#ffffff"
+            fontSize={width * 0.12}
+            color={isUnlocked ? "#ffffff" : "#ff6b6b"}
             anchorX="center"
             anchorY="middle"
             fontWeight="bold"
           >
-            클릭해서 열기
+            {isUnlocked ? "클릭해서 열기" : getLockedMessage()}
           </Text>
         )}
       </group>

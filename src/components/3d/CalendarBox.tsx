@@ -19,10 +19,17 @@ export function CalendarBox() {
   const groupRef = useRef<THREE.Group>(null);
   const { gl, camera } = useThree();
 
-  // Rotation state
+  // Rotation state - 대각선으로 기울어진 초기값 (윗면 보이도록)
   const [isDragging, setIsDragging] = useState(false);
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState({ x: 0.3, y: 0.5 });
   const previousMousePosition = useRef({ x: 0, y: 0 });
+
+  // Idle animation state
+  const [isIdle, setIsIdle] = useState(false);
+  const lastInteractionTime = useRef(Date.now());
+  const idleRotationOffset = useRef({ x: 0, y: 0 });
+  const idleStartTime = useRef<number | null>(null);
+  const idleAmplitude = useRef(0); // fade-in을 위한 amplitude
 
   // Zoom state - responsive initial zoom based on aspect ratio
   const getInitialZoom = () => {
@@ -191,6 +198,8 @@ export function CalendarBox() {
       e.preventDefault(); // 기본 동작 방지
       setIsDragging(true);
       previousMousePosition.current = { x: e.clientX, y: e.clientY };
+      lastInteractionTime.current = Date.now();
+      setIsIdle(false);
     };
 
     const handlePointerMove = (e: PointerEvent) => {
@@ -214,6 +223,8 @@ export function CalendarBox() {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      lastInteractionTime.current = Date.now();
+      setIsIdle(false);
       setZoom((prev) => {
         const newZoom = prev + e.deltaY * 0.05;
         return Math.max(minZoom, Math.min(maxZoom, newZoom));
@@ -248,11 +259,42 @@ export function CalendarBox() {
     };
   }, [isDragging, gl.domElement, minZoom, maxZoom]);
 
-  // Apply rotation to the group
-  useFrame(() => {
+  // Apply rotation to the group with idle animation
+  useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.x = rotation.x;
-      groupRef.current.rotation.y = rotation.y;
+      // Check if user has been idle for 2 seconds (더 빨리 시작)
+      const timeSinceInteraction = Date.now() - lastInteractionTime.current;
+      if (timeSinceInteraction > 2000 && !isDragging) {
+        if (!isIdle) {
+          setIsIdle(true);
+          idleStartTime.current = state.clock.getElapsedTime();
+        }
+
+        // Fade-in effect: amplitude가 0에서 1로 부드럽게 증가
+        const idleElapsedTime =
+          state.clock.getElapsedTime() - (idleStartTime.current || 0);
+        const fadeInDuration = 1.5; // 1.5초에 걸쳐 fade in
+        idleAmplitude.current = Math.min(idleElapsedTime / fadeInDuration, 1);
+
+        // More dramatic idle animation - noticeable oscillation
+        // idle 시작 시점부터의 시간을 사용하여 0부터 시작
+        const time = idleElapsedTime;
+        idleRotationOffset.current.x =
+          Math.sin(time * 0.5) * 0.15 * idleAmplitude.current;
+        idleRotationOffset.current.y =
+          Math.sin(time * 0.4) * 0.2 * idleAmplitude.current;
+      } else {
+        if (isIdle) {
+          setIsIdle(false);
+          idleStartTime.current = null;
+          idleAmplitude.current = 0;
+        }
+        idleRotationOffset.current.x = 0;
+        idleRotationOffset.current.y = 0;
+      }
+
+      groupRef.current.rotation.x = rotation.x + idleRotationOffset.current.x;
+      groupRef.current.rotation.y = rotation.y + idleRotationOffset.current.y;
     }
 
     // Apply zoom to camera
