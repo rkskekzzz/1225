@@ -12,6 +12,10 @@ import { CalendarBox } from "./CalendarBox";
 import { Suspense, useMemo } from "react";
 import { useCalendarStore } from "@/store";
 
+interface SceneProps {
+  onLockedDayClick?: (day: number) => void;
+}
+
 const DEFAULT_BACKGROUND = "/image.jpeg";
 
 // 3D 배경 평면 컴포넌트
@@ -67,7 +71,7 @@ function BackgroundPlane({ imageUrl }: { imageUrl: string }) {
   );
 }
 
-export default function Scene() {
+export default function Scene({ onLockedDayClick }: SceneProps) {
   const { backgroundImage } = useCalendarStore();
   const bgImage = backgroundImage || DEFAULT_BACKGROUND;
 
@@ -90,7 +94,7 @@ export default function Scene() {
             color="#4444ff"
           />
 
-          <CalendarBox />
+          <CalendarBox onLockedDayClick={onLockedDayClick} />
 
           {/* Environment Reflection */}
           <Environment preset="forest" />
