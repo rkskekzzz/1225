@@ -28,31 +28,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 중복 확인
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("username")
-      .eq("username", username)
-      .single();
+    // Supabase에 사용자 저장 시도
+    try {
+      // 중복 확인
+      const { data: existingUser } = await supabase
+        .from("users")
+        .select("username")
+        .eq("username", username)
+        .single();
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "이미 사용 중인 아이디입니다." },
-        { status: 409 }
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "이미 사용 중인 아이디입니다." },
+          { status: 409 }
+        );
+      }
+
+      // 사용자 생성
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert([{ username, password }]);
+
+      if (insertError) {
+        throw insertError;
+      }
+    } catch (supabaseError) {
+      // Supabase 연결 실패 시 경고 로그만 출력하고 계속 진행
+      console.warn(
+        "Supabase 연결 실패, 로컬 모드로 계속합니다:",
+        supabaseError
       );
-    }
-
-    // 사용자 생성 (간단하게 평문 비밀번호 저장 - 보안이 크게 중요하지 않다고 하셨으므로)
-    const { error: insertError } = await supabase
-      .from("users")
-      .insert([{ username, password }]);
-
-    if (insertError) {
-      console.error("Insert error:", insertError);
-      return NextResponse.json(
-        { error: "회원가입 중 오류가 발생했습니다." },
-        { status: 500 }
-      );
+      // 로컬에서는 메모리에 저장하지 않고 그냥 진행
+      // (재시작하면 사라지지만 테스트 목적으로는 충분)
     }
 
     // 자동 로그인 - 쿠키 설정

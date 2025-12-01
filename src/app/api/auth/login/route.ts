@@ -2,34 +2,52 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
 
-// 기본 관리자 계정 (Supabase에 데이터가 없을 때를 대비)
-const DEFAULT_ADMIN = { username: "admin", password: "password" };
+// 로컬 테스트용 기본 계정들 (Supabase 없이도 작동)
+const LOCAL_USERS = [
+  { username: "admin", password: "password" },
+  { username: "test", password: "test123" },
+];
 
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
-    // Supabase에서 사용자 조회
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("username", username)
-      .eq("password", password)
-      .single();
+    let isAuthenticated = false;
 
-    // DB에서 찾지 못했을 경우 기본 관리자 계정 확인
-    if (error || !user) {
-      if (
-        username === DEFAULT_ADMIN.username &&
-        password === DEFAULT_ADMIN.password
-      ) {
-        // 기본 관리자 계정으로 로그인
-      } else {
-        return NextResponse.json(
-          { error: "아이디 또는 비밀번호가 올바르지 않습니다." },
-          { status: 401 }
-        );
+    // 1. 먼저 Supabase에서 사용자 조회 시도
+    try {
+      const { data: user, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single();
+
+      if (user && !error) {
+        isAuthenticated = true;
       }
+    } catch (supabaseError) {
+      // Supabase 연결 실패 시 로컬 계정으로 fallback
+      console.log("Supabase 연결 실패, 로컬 계정으로 시도합니다.");
+    }
+
+    // 2. Supabase에서 찾지 못했거나 연결 실패 시 로컬 계정 확인
+    if (!isAuthenticated) {
+      const localUser = LOCAL_USERS.find(
+        (u) => u.username === username && u.password === password
+      );
+
+      if (localUser) {
+        isAuthenticated = true;
+      }
+    }
+
+    // 3. 인증 실패
+    if (!isAuthenticated) {
+      return NextResponse.json(
+        { error: "아이디 또는 비밀번호가 올바르지 않습니다." },
+        { status: 401 }
+      );
     }
 
     // 쿠키 설정 (간단한 인증 토큰)

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Gift, Loader2 } from "lucide-react";
 
 export default function SignupForm() {
   const [username, setUsername] = useState("");
@@ -16,7 +17,6 @@ export default function SignupForm() {
     e.preventDefault();
     setError("");
 
-    // 유효성 검사
     if (username.length < 3) {
       setError("아이디는 최소 3자 이상이어야 합니다.");
       return;
@@ -46,7 +46,6 @@ export default function SignupForm() {
       const data = await response.json();
 
       if (response.ok) {
-        // 회원가입 성공 - 자동 로그인
         router.push("/");
         router.refresh();
       } else {
@@ -60,20 +59,30 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
-      <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-        <h1 className="text-3xl font-bold text-white text-center mb-2">
-          🎄 회원가입
-        </h1>
-        <p className="text-white/70 text-center mb-8 text-sm">
-          나만의 Advent Calendar 만들기
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-green-500/10 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative bg-white/5 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-4">
+            <Gift className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">회원가입</h1>
+          <p className="text-slate-400 text-sm mt-1">
+            나만의 Advent Calendar 만들기
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-white mb-2"
+              className="block text-sm font-medium text-slate-300 mb-2"
             >
               아이디
             </label>
@@ -82,7 +91,7 @@ export default function SignupForm() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="아이디 (최소 3자)"
               required
               disabled={loading}
@@ -93,7 +102,7 @@ export default function SignupForm() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-white mb-2"
+              className="block text-sm font-medium text-slate-300 mb-2"
             >
               비밀번호
             </label>
@@ -102,7 +111,7 @@ export default function SignupForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="비밀번호 (최소 4자)"
               required
               disabled={loading}
@@ -113,7 +122,7 @@ export default function SignupForm() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-white mb-2"
+              className="block text-sm font-medium text-slate-300 mb-2"
             >
               비밀번호 확인
             </label>
@@ -122,7 +131,7 @@ export default function SignupForm() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               placeholder="비밀번호 다시 입력"
               required
               disabled={loading}
@@ -130,7 +139,7 @@ export default function SignupForm() {
           </div>
 
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-white px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -138,18 +147,25 @@ export default function SignupForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-emerald-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
           >
-            {loading ? "가입 중..." : "회원가입"}
+            {loading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                가입 중...
+              </>
+            ) : (
+              "회원가입"
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-white/70 text-sm">
+          <p className="text-slate-400 text-sm">
             이미 계정이 있으신가요?{" "}
             <Link
               href="/login"
-              className="text-pink-300 hover:text-pink-200 font-medium underline"
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
             >
               로그인
             </Link>
