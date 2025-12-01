@@ -18,7 +18,7 @@ const PreviewScene = dynamic(() => import("@/components/3d/PreviewScene"), {
   ),
 });
 
-const PREVIEW_CALENDAR_ID = "644133d7-c8fb-47c0-b5a6-9557bea470db";
+const PREVIEW_CALENDAR_ID = "fcb325bf-324d-496b-b759-71a26a236aad";
 
 interface CalendarData {
   mainImage: string | null;
