@@ -59,14 +59,26 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen flex items-center justify-center relative">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/image.jpeg')",
+          }}
+        />
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" />
+      </div>
+
       {/* Decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
         <div className="absolute top-20 right-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-green-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative bg-white/5 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10">
+      <div className="relative bg-white/5 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10 z-20">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-4">

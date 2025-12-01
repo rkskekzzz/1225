@@ -104,16 +104,21 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="h-[100svh] flex flex-col lg:flex-row bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Top/Left side - Preview Calendar */}
-      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-green-500/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl" />
-        </div>
+    <div className="h-[100svh] flex flex-col lg:flex-row relative">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/image.jpeg')",
+          }}
+        />
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" />
+      </div>
 
+      {/* Top/Left side - Preview Calendar */}
+      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden z-10">
         {/* 3D Calendar Preview */}
         <div className="relative w-full h-full">
           {calendarData && (
@@ -122,6 +127,28 @@ export default function LoginForm() {
               doorShape={calendarData.doorShape}
             />
           )}
+        </div>
+
+        {/* Image Credit */}
+        <div className="absolute bottom-16 lg:bottom-20 right-4 z-20 text-[10px] lg:text-xs text-white/60 bg-black/30 backdrop-blur-sm px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg">
+          사진:{" "}
+          <a
+            href="https://unsplash.com/ko/%EC%82%AC%EC%A7%84/%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4-%ED%8A%B8%EB%A6%AC%EC%97%90-%EC%8B%B8%EA%B5%AC%EB%A0%A4%EC%9D%98-%EA%B7%BC%EC%A0%91-%EC%B4%AC%EC%98%81-%EC%82%AC%EC%A7%84-SUTfFCAHV_A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/80 hover:text-white underline transition-colors"
+          >
+            Unsplash
+          </a>
+          의{" "}
+          <a
+            href="https://unsplash.com/ko/@chadmadden?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/80 hover:text-white underline transition-colors"
+          >
+            Chad Madden
+          </a>
         </div>
 
         {/* Controls Guide */}
@@ -170,7 +197,7 @@ export default function LoginForm() {
       </div>
 
       {/* Bottom/Right side - Login Form */}
-      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto">
+      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto z-10">
         <div className="relative bg-white/5 backdrop-blur-xl p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10">
           {/* Logo */}
           <div className="flex flex-col items-center mb-6 lg:mb-8">
