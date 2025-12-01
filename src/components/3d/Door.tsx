@@ -157,7 +157,11 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
 
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
-    mouseDownPos.current = { x: e.clientX, y: e.clientY };
+    // Three.js pointer events work for both mouse and touch
+    // Store the pointer position using the event's point or screen position
+    const x = e.clientX ?? e.point?.x ?? 0;
+    const y = e.clientY ?? e.point?.y ?? 0;
+    mouseDownPos.current = { x, y };
   };
 
   const handleClick = (e: any) => {
@@ -165,8 +169,10 @@ export function Door({ day, position, size, frontTexture, shape }: DoorProps) {
 
     // Check if this was a drag or a click
     if (mouseDownPos.current) {
-      const dx = Math.abs(e.clientX - mouseDownPos.current.x);
-      const dy = Math.abs(e.clientY - mouseDownPos.current.y);
+      const x = e.clientX ?? e.point?.x ?? 0;
+      const y = e.clientY ?? e.point?.y ?? 0;
+      const dx = Math.abs(x - mouseDownPos.current.x);
+      const dy = Math.abs(y - mouseDownPos.current.y);
       const dragThreshold = 5; // pixels
 
       // If mouse moved more than threshold, it was a drag, not a click

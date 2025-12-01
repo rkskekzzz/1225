@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useCalendarStore } from '@/store';
-import { X } from 'lucide-react';
+import { useCalendarStore } from "@/store";
+import { X } from "lucide-react";
 
 export default function DayModal() {
   const { viewingDay, setViewingDay, dayImages, dayMemos } = useCalendarStore();
@@ -22,11 +22,13 @@ export default function DayModal() {
         </button>
 
         <div className="p-8 text-center space-y-4">
-          <h2 className="text-3xl font-bold text-gray-900">Day {viewingDay}</h2>
-
           <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
             {imageUrl ? (
-              <img src={imageUrl} alt={`Day ${viewingDay}`} className="w-full h-full object-cover" />
+              <img
+                src={imageUrl}
+                alt={`Day ${viewingDay}`}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="text-gray-400">
                 <p>No image for this day</p>
@@ -36,11 +38,11 @@ export default function DayModal() {
 
           {memo && (
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-gray-700 text-sm whitespace-pre-wrap">{memo}</p>
+              <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                {memo}
+              </p>
             </div>
           )}
-
-
         </div>
       </div>
     </div>

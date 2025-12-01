@@ -193,9 +193,12 @@ export function CalendarBox() {
   // Mouse event handlers
   useEffect(() => {
     const canvas = gl.domElement;
+    let dragStartPos = { x: 0, y: 0 };
+    let hasMoved = false;
 
     const handlePointerDown = (e: PointerEvent) => {
-      e.preventDefault(); // 기본 동작 방지
+      dragStartPos = { x: e.clientX, y: e.clientY };
+      hasMoved = false;
       setIsDragging(true);
       previousMousePosition.current = { x: e.clientX, y: e.clientY };
       lastInteractionTime.current = Date.now();
@@ -204,10 +207,18 @@ export function CalendarBox() {
 
     const handlePointerMove = (e: PointerEvent) => {
       if (!isDragging) return;
-      e.preventDefault(); // 기본 스크롤 방지
 
       const deltaX = e.clientX - previousMousePosition.current.x;
       const deltaY = e.clientY - previousMousePosition.current.y;
+
+      // 드래그가 실제로 발생했는지 확인 (5px 이상 이동)
+      if (!hasMoved && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+        hasMoved = true;
+      }
+
+      if (hasMoved) {
+        e.preventDefault(); // 드래그 중일 때만 기본 동작 방지
+      }
 
       setRotation((prev) => ({
         x: prev.x + deltaY * 0.01,
@@ -219,6 +230,7 @@ export function CalendarBox() {
 
     const handlePointerUp = () => {
       setIsDragging(false);
+      hasMoved = false;
     };
 
     const handleWheel = (e: WheelEvent) => {
@@ -231,13 +243,11 @@ export function CalendarBox() {
       });
     };
 
-    // 터치 이벤트 추가로 모바일 스크롤 방지
-    const handleTouchStart = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-
+    // 터치 이벤트 - 드래그 중일 때만 스크롤 방지
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
+      if (isDragging) {
+        e.preventDefault();
+      }
     };
 
     canvas.addEventListener("pointerdown", handlePointerDown);
@@ -245,7 +255,6 @@ export function CalendarBox() {
     canvas.addEventListener("pointerup", handlePointerUp);
     canvas.addEventListener("pointerleave", handlePointerUp);
     canvas.addEventListener("wheel", handleWheel, { passive: false });
-    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
     canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return () => {
@@ -254,7 +263,6 @@ export function CalendarBox() {
       canvas.removeEventListener("pointerup", handlePointerUp);
       canvas.removeEventListener("pointerleave", handlePointerUp);
       canvas.removeEventListener("wheel", handleWheel);
-      canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchmove", handleTouchMove);
     };
   }, [isDragging, gl.domElement, minZoom, maxZoom]);
