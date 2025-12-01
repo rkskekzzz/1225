@@ -118,7 +118,7 @@ export default function LoginForm() {
       </div>
 
       {/* Top/Left side - Preview Calendar */}
-      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden z-10">
+      <div className="min-h-0 flex-shrink lg:h-full lg:w-1/2 xl:w-3/5 flex items-center justify-center relative overflow-hidden z-10">
         {/* 3D Calendar Preview */}
         <div className="relative w-full h-full">
           {calendarData && (
@@ -197,7 +197,7 @@ export default function LoginForm() {
       </div>
 
       {/* Bottom/Right side - Login Form */}
-      <div className="h-[50svh] lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto z-10">
+      <div className="flex-grow lg:h-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 lg:p-8 relative overflow-y-auto z-10">
         <div className="relative bg-white/5 backdrop-blur-xl p-6 lg:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/10">
           {/* Logo */}
           <div className="flex flex-col items-center mb-6 lg:mb-8">
