@@ -216,6 +216,11 @@ export function CalendarBox() {
     return t;
   }, [rawRightTexture]);
 
+  // Pinch zoom state
+  const pinchStartDist = useRef<number | null>(null);
+  const pinchStartZoom = useRef<number | null>(null);
+  const isPinching = useRef(false);
+
   // Mouse event handlers
   useEffect(() => {
     const canvas = gl.domElement;
@@ -223,11 +228,6 @@ export function CalendarBox() {
     // Drag state
     let dragStartPos = { x: 0, y: 0 };
     let hasMoved = false;
-
-    // Pinch zoom state
-    const pinchStartDist = useRef<number | null>(null);
-    const pinchStartZoom = useRef<number | null>(null);
-    const isPinching = useRef(false);
 
     const handlePointerDown = (e: PointerEvent) => {
       // 핀치 줌 중이면 회전 시작하지 않음
