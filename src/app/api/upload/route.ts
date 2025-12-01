@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 
+// 단일 파일 업로드 API
 export async function POST(request: NextRequest) {
   try {
     // 인증 확인
@@ -15,36 +16,27 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData();
-    const files = formData.getAll("files") as File[];
+    const file = formData.get("file") as File;
+    const key = formData.get("key") as string;
 
-    if (!files || files.length === 0) {
+    if (!file) {
       return NextResponse.json({ error: "파일이 없습니다" }, { status: 400 });
     }
 
-    const uploadedUrls: { key: string; url: string }[] = [];
-
-    for (const file of files) {
-      const key = (formData.get(`key_${file.name}`) as string) || file.name;
-
-      // Vercel Blob에 업로드
-      const blob = await put(
-        `advent-calendars/${user.id}/${Date.now()}-${file.name}`,
-        file,
-        {
-          access: "public",
-          token: process.env.PLAYGROUND_1225_READ_WRITE_TOKEN,
-        }
-      );
-
-      uploadedUrls.push({
-        key,
-        url: blob.url,
-      });
-    }
+    // Vercel Blob에 업로드
+    const blob = await put(
+      `advent-calendars/${user.id}/${Date.now()}-${file.name}`,
+      file,
+      {
+        access: "public",
+        token: process.env.PLAYGROUND_1225_READ_WRITE_TOKEN,
+      }
+    );
 
     return NextResponse.json({
       success: true,
-      uploads: uploadedUrls,
+      key: key || file.name,
+      url: blob.url,
     });
   } catch (error) {
     console.error("Upload error:", error);

@@ -14,11 +14,13 @@ export interface ProcessedBoxTextures {
  * Convert an image file to WebP format
  * @param file - The original image file
  * @param quality - WebP quality (0-1), defaults to 0.9
+ * @param maxWidth - Maximum width for resizing (optional)
  * @returns A new File object in WebP format
  */
 export async function convertToWebP(
   file: File,
-  quality: number = 0.9
+  quality: number = 0.9,
+  maxWidth?: number
 ): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -31,8 +33,20 @@ export async function convertToWebP(
     img.onload = () => {
       try {
         const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
+
+        // 리사이즈 로직
+        let width = img.width;
+        let height = img.height;
+
+        if (maxWidth && width > maxWidth) {
+          // 비율을 유지하면서 리사이즈
+          const ratio = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * ratio);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
@@ -40,7 +54,7 @@ export async function convertToWebP(
           return;
         }
 
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
 
         // Convert to WebP blob
         canvas.toBlob(
@@ -83,13 +97,15 @@ export async function convertToWebP(
  * Convert multiple image files to WebP format
  * @param files - Array of image files to convert
  * @param quality - WebP quality (0-1), defaults to 0.9
+ * @param maxWidth - Maximum width for resizing (optional)
  * @returns Promise that resolves to an array of WebP files
  */
 export async function convertMultipleToWebP(
   files: File[],
-  quality: number = 0.9
+  quality: number = 0.9,
+  maxWidth?: number
 ): Promise<File[]> {
-  const promises = files.map((file) => convertToWebP(file, quality));
+  const promises = files.map((file) => convertToWebP(file, quality, maxWidth));
   return Promise.all(promises);
 }
 
