@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 interface CalendarState {
   mainImage: string | null;
+  backgroundImage: string | null;
   dayImages: Record<number, string>;
   dayMemos: Record<number, string>;
   doorShape: 'square' | 'circle';
@@ -10,6 +11,7 @@ interface CalendarState {
   isPreviewMode: boolean;
 
   setMainImage: (url: string) => void;
+  setBackgroundImage: (url: string | null) => void;
   setDayImage: (day: number, url: string) => void;
   setDayMemo: (day: number, memo: string) => void;
   setDoorShape: (shape: 'square' | 'circle') => void;
@@ -22,6 +24,7 @@ interface CalendarState {
 
 export const useCalendarStore = create<CalendarState>((set) => ({
   mainImage: null,
+  backgroundImage: null,
   dayImages: {},
   dayMemos: {},
   doorShape: 'square',
@@ -30,6 +33,7 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   isPreviewMode: false,
 
   setMainImage: (url) => set({ mainImage: url }),
+  setBackgroundImage: (url) => set({ backgroundImage: url }),
   setDayImage: (day, url) => set((state) => ({
     dayImages: { ...state.dayImages, [day]: url }
   })),
@@ -49,6 +53,7 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   setPreviewMode: (isPreview) => set({ isPreviewMode: isPreview }),
   reset: () => set({
     mainImage: null,
+    backgroundImage: null,
     dayImages: {},
     dayMemos: {},
     doorShape: 'square',
@@ -58,6 +63,7 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   }),
   loadConfig: (config) => set({
     mainImage: config.mainImage,
+    backgroundImage: config.backgroundImage || null,
     dayImages: config.dayImages,
     dayMemos: config.dayMemos || {},
     doorShape: config.doorShape,

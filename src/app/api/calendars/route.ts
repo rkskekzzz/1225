@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, mainImage, dayImages, dayMemos, doorShape } = body;
+    const { title, mainImage, backgroundImage, dayImages, dayMemos, doorShape } = body;
 
     // 캘린더 데이터 저장
     const { data, error } = await supabase
@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         title: title || "나의 어드벤트 캘린더",
         main_image: mainImage,
+        background_image: backgroundImage || null,
         day_images: dayImages,
         day_memos: dayMemos,
         door_shape: doorShape,

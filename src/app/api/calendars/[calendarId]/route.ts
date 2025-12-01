@@ -18,6 +18,7 @@ export async function GET(
         user_id,
         title,
         main_image,
+        background_image,
         day_images,
         day_memos,
         door_shape,
@@ -42,6 +43,7 @@ export async function GET(
         userId: data.user_id,
         title: data.title,
         mainImage: data.main_image,
+        backgroundImage: data.background_image,
         dayImages: data.day_images,
         dayMemos: data.day_memos,
         doorShape: data.door_shape,
@@ -74,7 +76,7 @@ export async function PUT(
 
     const { calendarId } = await params;
     const body = await request.json();
-    const { title, mainImage, dayImages, dayMemos, doorShape } = body;
+    const { title, mainImage, backgroundImage, dayImages, dayMemos, doorShape } = body;
 
     // 권한 확인
     const { data: existing } = await supabase
@@ -95,6 +97,7 @@ export async function PUT(
       .update({
         title,
         main_image: mainImage,
+        background_image: backgroundImage || null,
         day_images: dayImages,
         day_memos: dayMemos,
         door_shape: doorShape,

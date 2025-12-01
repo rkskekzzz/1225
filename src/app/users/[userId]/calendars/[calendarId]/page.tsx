@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Scene from "@/components/3d/Scene";
 import DayModal from "@/components/ui/DayModal";
 import { useCalendarStore } from "@/store";
-import { Gift, Loader2, Home } from "lucide-react";
+import { Gift, Loader2, Home, MousePointer2, Hand, ZoomIn } from "lucide-react";
 
 interface CalendarData {
   id: string;
@@ -100,48 +100,100 @@ export default function SharedCalendarViewer() {
   }
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Gift className="w-5 h-5 text-white" />
+    <>
+      <main className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        {/* Header */}
+        <div className="absolute top-0 left-0 right-0 z-20 p-4">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Gift className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-white font-semibold">
+                  {calendarData?.title || "어드벤트 캘린더"}
+                </h1>
+                <p className="text-white/50 text-sm">
+                  by {calendarData?.username} 🎄
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-white font-semibold">
-                {calendarData?.title || "어드벤트 캘린더"}
-              </h1>
-              <p className="text-white/50 text-sm">
-                by {calendarData?.username} 🎄
-              </p>
+          </div>
+        </div>
+
+        {/* 3D Scene */}
+        <div className="absolute inset-0 z-0">
+          <Scene />
+        </div>
+
+        {/* Day Modal */}
+        <DayModal />
+
+        {/* Snowfall Effect */}
+        <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-white/30 rounded-full animate-snowfall"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${5 + Math.random() * 5}s`,
+              }}
+            />
+          ))}
+        </div>
+      </main>
+
+      {/* Controls Guide - Outside main to avoid overflow-hidden */}
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999]">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl border border-white/20 px-3 py-2 md:px-6 md:py-4 shadow-2xl">
+          <div className="flex items-center gap-3 md:gap-6 text-white/90">
+            {/* Drag to Rotate */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Hand size={14} className="md:w-4 md:h-4 text-white" />
+              </div>
+              <div className="text-xs md:text-sm">
+                <div className="font-medium">드래그</div>
+                <div className="text-white/60 text-[10px] md:text-xs hidden md:block">
+                  회전
+                </div>
+              </div>
+            </div>
+
+            <div className="w-px h-6 md:h-8 bg-white/20"></div>
+
+            {/* Scroll to Zoom */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <ZoomIn size={14} className="md:w-4 md:h-4 text-white" />
+              </div>
+              <div className="text-xs md:text-sm">
+                <div className="font-medium">휠</div>
+                <div className="text-white/60 text-[10px] md:text-xs hidden md:block">
+                  확대/축소
+                </div>
+              </div>
+            </div>
+
+            <div className="w-px h-6 md:h-8 bg-white/20"></div>
+
+            {/* Click Door */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <MousePointer2 size={14} className="md:w-4 md:h-4 text-white" />
+              </div>
+              <div className="text-xs md:text-sm">
+                <div className="font-medium">클릭</div>
+                <div className="text-white/60 text-[10px] md:text-xs hidden md:block">
+                  문 열기
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* 3D Scene */}
-      <div className="absolute inset-0 z-0">
-        <Scene />
-      </div>
-
-      {/* Day Modal */}
-      <DayModal />
-
-      {/* Snowfall Effect */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-white/30 rounded-full animate-snowfall"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 5}s`,
-            }}
-          />
-        ))}
-      </div>
-    </main>
+    </>
   );
 }

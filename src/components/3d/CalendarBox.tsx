@@ -1,15 +1,63 @@
-import { useCalendarStore } from '@/store';
-import { Door } from './Door';
-import { useTexture } from '@react-three/drei';
-import { useState, useEffect, useMemo } from 'react';
-import { processImageForBox, ProcessedBoxTextures } from '@/utils/imageProcessing';
-import * as THREE from 'three';
+import { useCalendarStore } from "@/store";
+import { Door } from "./Door";
+import { useTexture } from "@react-three/drei";
+import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  processImageForBox,
+  ProcessedBoxTextures,
+} from "@/utils/imageProcessing";
+import * as THREE from "three";
+import { useFrame, useThree } from "@react-three/fiber";
 
-const FALLBACK_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+const FALLBACK_TEXTURE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 export function CalendarBox() {
   const { mainImage, doorShape } = useCalendarStore();
-  const [processedTextures, setProcessedTextures] = useState<ProcessedBoxTextures | null>(null);
+  const [processedTextures, setProcessedTextures] =
+    useState<ProcessedBoxTextures | null>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const { gl, camera } = useThree();
+
+  // Rotation state
+  const [isDragging, setIsDragging] = useState(false);
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const previousMousePosition = useRef({ x: 0, y: 0 });
+
+  // Zoom state - responsive initial zoom based on aspect ratio
+  const getInitialZoom = () => {
+    if (typeof window !== "undefined") {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+
+      // 화면이 세로로 긴 경우 (모바일 세로)
+      if (aspectRatio < 0.75) {
+        return 65;
+      }
+      // 화면이 가로로 긴 경우 (데스크톱)
+      else if (aspectRatio > 1.5) {
+        return 50;
+      }
+      // 중간 비율 (모바일 가로, 태블릿)
+      else {
+        return 55;
+      }
+    }
+    return 45;
+  };
+
+  const getMinZoom = () => {
+    if (typeof window !== "undefined") {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      // 박스가 화면을 꽉 채우도록 최소 줌 레벨 계산
+      // 세로로 긴 화면일수록 더 가까이
+      return aspectRatio < 0.75 ? 28 : aspectRatio > 1.5 ? 22 : 25;
+    }
+    return 20;
+  };
+
+  const [zoom, setZoom] = useState(getInitialZoom);
+  const [minZoom, setMinZoom] = useState(getMinZoom);
+  const maxZoom = 80;
 
   // Box dimensions
   const width = 30;
@@ -29,24 +77,65 @@ export function CalendarBox() {
       return;
     }
 
-    console.log('Processing main image:', mainImage);
+    console.log("Processing main image:", mainImage);
     processImageForBox(mainImage)
       .then((textures: ProcessedBoxTextures) => {
-        console.log('Processed textures:', textures);
+        console.log("Processed textures:", textures);
         setProcessedTextures(textures);
       })
       .catch((error: Error) => {
-        console.error('Failed to process image:', error);
+        console.error("Failed to process image:", error);
         setProcessedTextures(null);
       });
   }, [mainImage]);
 
+  // Handle resize to adjust zoom for mobile/desktop
+  useEffect(() => {
+    const handleResize = () => {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+
+      let newZoom;
+      let newMinZoom;
+
+      if (aspectRatio < 0.75) {
+        // 세로로 긴 화면
+        newZoom = 65;
+        newMinZoom = 28;
+      } else if (aspectRatio > 1.5) {
+        // 가로로 긴 화면
+        newZoom = 50;
+        newMinZoom = 22;
+      } else {
+        // 중간 비율
+        newZoom = 55;
+        newMinZoom = 25;
+      }
+
+      setZoom((prevZoom) => {
+        // 현재 줌이 새로운 최소값보다 작으면 새로운 초기값으로
+        return prevZoom < newMinZoom ? newZoom : prevZoom;
+      });
+      setMinZoom(newMinZoom);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Load textures from processed data URLs
-  const rawFrontTexture = useTexture(processedTextures?.front || FALLBACK_TEXTURE);
+  const rawFrontTexture = useTexture(
+    processedTextures?.front || FALLBACK_TEXTURE
+  );
   const rawTopTexture = useTexture(processedTextures?.top || FALLBACK_TEXTURE);
-  const rawBottomTexture = useTexture(processedTextures?.bottom || FALLBACK_TEXTURE);
-  const rawLeftTexture = useTexture(processedTextures?.left || FALLBACK_TEXTURE);
-  const rawRightTexture = useTexture(processedTextures?.right || FALLBACK_TEXTURE);
+  const rawBottomTexture = useTexture(
+    processedTextures?.bottom || FALLBACK_TEXTURE
+  );
+  const rawLeftTexture = useTexture(
+    processedTextures?.left || FALLBACK_TEXTURE
+  );
+  const rawRightTexture = useTexture(
+    processedTextures?.right || FALLBACK_TEXTURE
+  );
 
   // Apply texture filtering
   const frontTexture = useMemo(() => {
@@ -94,6 +183,82 @@ export function CalendarBox() {
     return t;
   }, [rawRightTexture]);
 
+  // Mouse event handlers
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      e.preventDefault(); // 기본 동작 방지
+      setIsDragging(true);
+      previousMousePosition.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      e.preventDefault(); // 기본 스크롤 방지
+
+      const deltaX = e.clientX - previousMousePosition.current.x;
+      const deltaY = e.clientY - previousMousePosition.current.y;
+
+      setRotation((prev) => ({
+        x: prev.x + deltaY * 0.01,
+        y: prev.y + deltaX * 0.01,
+      }));
+
+      previousMousePosition.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom((prev) => {
+        const newZoom = prev + e.deltaY * 0.05;
+        return Math.max(minZoom, Math.min(maxZoom, newZoom));
+      });
+    };
+
+    // 터치 이벤트 추가로 모바일 스크롤 방지
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointermove", handlePointerMove);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointerleave", handlePointerUp);
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointermove", handlePointerMove);
+      canvas.removeEventListener("pointerup", handlePointerUp);
+      canvas.removeEventListener("pointerleave", handlePointerUp);
+      canvas.removeEventListener("wheel", handleWheel);
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [isDragging, gl.domElement, minZoom, maxZoom]);
+
+  // Apply rotation to the group
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.x = rotation.x;
+      groupRef.current.rotation.y = rotation.y;
+    }
+
+    // Apply zoom to camera
+    camera.position.z = zoom;
+  });
+
   // Generate 25 doors
   const doors = Array.from({ length: 25 }, (_, i) => {
     const day = i + 1;
@@ -103,8 +268,8 @@ export function CalendarBox() {
     // Position: Center is (0,0,0)
     // Top-Left is (-width/2, height/2)
     // Cell center offset
-    const x = -width/2 + col * cellWidth + cellWidth/2;
-    const y = height/2 - row * cellHeight - cellHeight/2;
+    const x = -width / 2 + col * cellWidth + cellWidth / 2;
+    const y = height / 2 - row * cellHeight - cellHeight / 2;
     const z = depth / 2 + 0.01; // Slightly in front of the box face to prevent Z-fighting
 
     return (
@@ -120,7 +285,7 @@ export function CalendarBox() {
   });
 
   return (
-    <group>
+    <group ref={groupRef}>
       {/* Main Box Body with side textures */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[width, height, depth]} />
@@ -134,8 +299,10 @@ export function CalendarBox() {
             <meshStandardMaterial attach="material-1" map={leftTexture} />
             <meshStandardMaterial attach="material-2" map={topTexture} />
             <meshStandardMaterial attach="material-3" map={bottomTexture} />
-            <meshStandardMaterial attach="material-4" map={frontTexture} /> {/* Front - shows image in gaps */}
-            <meshStandardMaterial attach="material-5" color="#5c3a21" /> {/* Back */}
+            <meshStandardMaterial attach="material-4" map={frontTexture} />{" "}
+            {/* Front - shows image in gaps */}
+            <meshStandardMaterial attach="material-5" color="#5c3a21" />{" "}
+            {/* Back */}
           </>
         ) : (
           <meshStandardMaterial color="#5c3a21" />

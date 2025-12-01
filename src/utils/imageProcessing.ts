@@ -3,11 +3,94 @@
  */
 
 export interface ProcessedBoxTextures {
-  front: string;    // Center 5:5 section as data URL
-  top: string;      // Top 5:1 section as data URL
-  bottom: string;   // Bottom 5:1 section as data URL
-  left: string;     // Left 1:5 section as data URL
-  right: string;    // Right 1:5 section as data URL
+  front: string; // Center 5:5 section as data URL
+  top: string; // Top 5:1 section as data URL
+  bottom: string; // Bottom 5:1 section as data URL
+  left: string; // Left 1:5 section as data URL
+  right: string; // Right 1:5 section as data URL
+}
+
+/**
+ * Convert an image file to WebP format
+ * @param file - The original image file
+ * @param quality - WebP quality (0-1), defaults to 0.9
+ * @returns A new File object in WebP format
+ */
+export async function convertToWebP(
+  file: File,
+  quality: number = 0.9
+): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Failed to get canvas context"));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0);
+
+        // Convert to WebP blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Failed to convert image to WebP"));
+              return;
+            }
+
+            // Create a new File from the blob
+            const webpFileName = file.name.replace(/\.[^/.]+$/, ".webp");
+            const webpFile = new File([blob], webpFileName, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+
+            resolve(webpFile);
+          },
+          "image/webp",
+          quality
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error("Failed to load image"));
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Convert multiple image files to WebP format
+ * @param files - Array of image files to convert
+ * @param quality - WebP quality (0-1), defaults to 0.9
+ * @returns Promise that resolves to an array of WebP files
+ */
+export async function convertMultipleToWebP(
+  files: File[],
+  quality: number = 0.9
+): Promise<File[]> {
+  const promises = files.map((file) => convertToWebP(file, quality));
+  return Promise.all(promises);
 }
 
 /**
@@ -21,10 +104,12 @@ export interface ProcessedBoxTextures {
  *    (1,1) | (5,1) | (1,1)
  * 3. Discard corners (1,1), use center (5,5) as front, and sides (1,5 or 5,1) as side textures
  */
-export async function processImageForBox(imageUrl: string): Promise<ProcessedBoxTextures> {
+export async function processImageForBox(
+  imageUrl: string
+): Promise<ProcessedBoxTextures> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
 
     img.onload = () => {
       try {
@@ -68,19 +153,30 @@ export async function processImageForBox(imageUrl: string): Promise<ProcessedBox
         const edgeSize = unitSize * edgeRatio;
 
         // Helper function to extract a section
-        const extractSection = (sx: number, sy: number, sw: number, sh: number): string => {
-          const canvas = document.createElement('canvas');
+        const extractSection = (
+          sx: number,
+          sy: number,
+          sw: number,
+          sh: number
+        ): string => {
+          const canvas = document.createElement("canvas");
           canvas.width = sw;
           canvas.height = sh;
-          const ctx = canvas.getContext('2d')!;
+          const ctx = canvas.getContext("2d")!;
 
           ctx.drawImage(
             img,
-            cropX + sx, cropY + sy, sw, sh,  // Source rectangle (from cropped square)
-            0, 0, sw, sh                      // Destination rectangle
+            cropX + sx,
+            cropY + sy,
+            sw,
+            sh, // Source rectangle (from cropped square)
+            0,
+            0,
+            sw,
+            sh // Destination rectangle
           );
 
-          return canvas.toDataURL('image/png');
+          return canvas.toDataURL("image/png");
         };
 
         // Step 3: Extract each section
@@ -96,12 +192,7 @@ export async function processImageForBox(imageUrl: string): Promise<ProcessedBox
           edgeSize
         );
 
-        const top = extractSection(
-          cornerSize,
-          0,
-          edgeSize,
-          cornerSize
-        );
+        const top = extractSection(cornerSize, 0, edgeSize, cornerSize);
 
         const bottom = extractSection(
           cornerSize,
@@ -110,12 +201,7 @@ export async function processImageForBox(imageUrl: string): Promise<ProcessedBox
           cornerSize
         );
 
-        const left = extractSection(
-          0,
-          cornerSize,
-          cornerSize,
-          edgeSize
-        );
+        const left = extractSection(0, cornerSize, cornerSize, edgeSize);
 
         const right = extractSection(
           cornerSize + edgeSize,
@@ -129,7 +215,7 @@ export async function processImageForBox(imageUrl: string): Promise<ProcessedBox
           top,
           bottom,
           left,
-          right
+          right,
         });
       } catch (error) {
         reject(error);
@@ -137,7 +223,7 @@ export async function processImageForBox(imageUrl: string): Promise<ProcessedBox
     };
 
     img.onerror = () => {
-      reject(new Error('Failed to load image'));
+      reject(new Error("Failed to load image"));
     };
 
     img.src = imageUrl;
