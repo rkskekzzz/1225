@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Calendar, Loader2, Gift, Trash2 } from "lucide-react";
+import { Plus, Calendar, Loader2, Gift, Trash2, User } from "lucide-react";
 
 interface CalendarItem {
   id: string;
@@ -17,6 +17,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [calendars, setCalendars] = useState<CalendarItem[]>([]);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -99,9 +100,11 @@ export default function Home() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Gift className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/ad-logo.png"
+              alt="Advent Calendar Logo"
+              className="w-10 h-10 object-contain"
+            />
             <div>
               <h1 className="text-lg md:text-xl font-bold text-slate-900">
                 Advent Calendar
@@ -120,6 +123,39 @@ export default function Home() {
             >
               로그아웃
             </button>
+
+            {/* Mobile Profile Button */}
+            <div className="relative sm:hidden">
+              <button
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="w-10 h-10  rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <User size={20} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 py-2 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-2 border-b border-slate-100">
+                      <p className="text-sm font-medium text-slate-900">{username}님</p>
+                      <p className="text-xs text-slate-500">안녕하세요!</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <button
               onClick={() => router.push("/calendars/new")}
               className="flex items-center gap-2 px-3 md:px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/20 font-medium"

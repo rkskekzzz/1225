@@ -7,6 +7,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "3D Advent Calendar",
   description: "Created with Next.js and Three.js",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/ad-logo.png",
+    shortcut: "/ad-logo.png",
+  },
 };
 
 export default function RootLayout({
