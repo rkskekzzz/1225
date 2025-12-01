@@ -207,8 +207,8 @@ export default function LoginForm() {
             <h1 className="text-xl lg:text-2xl font-bold text-white">
               Advent Calendar
             </h1>
-            <p className="text-slate-400 text-xs lg:text-sm mt-1">
-              로그인하고 시작하세요
+            <p className="text-slate-300 text-xs lg:text-sm mt-1 text-center">
+              나만의 어드벤트 캘린더를 만들어보세요 🎄✨
             </p>
           </div>
 
