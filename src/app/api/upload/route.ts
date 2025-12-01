@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         file,
         {
           access: "public",
+          token: process.env.PLAYGROUND_1225_READ_WRITE_TOKEN,
         }
       );
 
