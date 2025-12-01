@@ -40,9 +40,7 @@ export default function DayModal() {
             </div>
           )}
 
-          <p className="text-gray-500">
-            Merry Christmas!
-          </p>
+
         </div>
       </div>
     </div>

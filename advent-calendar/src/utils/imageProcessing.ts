@@ -2,68 +2,144 @@
  * Utility functions for processing textures for the 3D calendar box
  */
 
-export interface SideTextureConfig {
-  offsetX: number;
-  offsetY: number;
-  repeatX: number;
-  repeatY: number;
+export interface ProcessedBoxTextures {
+  front: string;    // Center 5:5 section as data URL
+  top: string;      // Top 5:1 section as data URL
+  bottom: string;   // Bottom 5:1 section as data URL
+  left: string;     // Left 1:5 section as data URL
+  right: string;    // Right 1:5 section as data URL
 }
 
 /**
- * Calculate texture configurations for each side of the box
+ * Process an image for box textures
  *
- * Strategy: The front face uses the FULL image (0 to 1).
- * The sides also use portions of the FULL image at the edges,
- * so boundaries between front and sides share the same pixels.
- * This creates seamless continuity where they meet.
- *
- * The corners are allowed to be cropped/overlapped since they
- * won't be perfectly visible anyway.
+ * Steps:
+ * 1. Crop to square by removing equal amounts from left and right
+ * 2. Divide into 9 sections:
+ *    (1,1) | (5,1) | (1,1)
+ *    (1,5) | (5,5) | (1,5)
+ *    (1,1) | (5,1) | (1,1)
+ * 3. Discard corners (1,1), use center (5,5) as front, and sides (1,5 or 5,1) as side textures
  */
-export function getBoxSideTextureConfigs(boxWidth: number, boxHeight: number, boxDepth: number) {
-  // For a 30x30x5 box:
-  // Front face (30x30): uses full image (0 to 1)
-  // The sides need to match the edges of the front face
+export async function processImageForBox(imageUrl: string): Promise<ProcessedBoxTextures> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
 
-  // Since front uses full image, sides should use the same edge regions
-  // Top/bottom sides are 30 wide x 5 deep
-  // Left/right sides are 5 deep x 30 tall
+    img.onload = () => {
+      try {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
 
-  // For seamless continuity, we use the FULL width/height
-  // and only constrain the depth dimension
+        // Step 1: Calculate square crop dimensions
+        let cropWidth: number;
+        let cropHeight: number;
+        let cropX: number;
+        let cropY: number;
 
-  return {
-    // Top side: uses the full width, top edge of image
-    // repeatY is set to 1 to stretch the top edge across the depth
-    top: {
-      offsetX: 0,
-      offsetY: 0,  // Take from top (in texture coords, top is high Y)
-      repeatX: 1,  // Full width
-      repeatY: 1,  // Stretch across depth
-    } as SideTextureConfig,
+        if (originalWidth > originalHeight) {
+          // Landscape: crop left and right equally
+          cropWidth = originalHeight;
+          cropHeight = originalHeight;
+          cropX = (originalWidth - originalHeight) / 2;
+          cropY = 0;
+        } else if (originalHeight > originalWidth) {
+          // Portrait: crop top and bottom equally
+          cropWidth = originalWidth;
+          cropHeight = originalWidth;
+          cropX = 0;
+          cropY = (originalHeight - originalWidth) / 2;
+        } else {
+          // Already square
+          cropWidth = originalWidth;
+          cropHeight = originalHeight;
+          cropX = 0;
+          cropY = 0;
+        }
 
-    // Bottom side: uses the full width, bottom edge
-    bottom: {
-      offsetX: 0,
-      offsetY: 0,
-      repeatX: 1,
-      repeatY: 1,
-    } as SideTextureConfig,
+        // Step 2: Calculate section dimensions
+        // Total ratio: 1+5+1 = 7 for both dimensions
+        const totalRatio = 7;
+        const cornerRatio = 1;
+        const edgeRatio = 5;
 
-    // Left side: uses the full height, left edge
-    left: {
-      offsetX: 0,
-      offsetY: 0,
-      repeatX: 1,
-      repeatY: 1,
-    } as SideTextureConfig,
+        const unitSize = cropWidth / totalRatio;
+        const cornerSize = unitSize * cornerRatio;
+        const edgeSize = unitSize * edgeRatio;
 
-    // Right side: uses the full height, right edge
-    right: {
-      offsetX: 0,
-      offsetY: 0,
-      repeatX: 1,
-      repeatY: 1,
-    } as SideTextureConfig,
-  };
+        // Helper function to extract a section
+        const extractSection = (sx: number, sy: number, sw: number, sh: number): string => {
+          const canvas = document.createElement('canvas');
+          canvas.width = sw;
+          canvas.height = sh;
+          const ctx = canvas.getContext('2d')!;
+
+          ctx.drawImage(
+            img,
+            cropX + sx, cropY + sy, sw, sh,  // Source rectangle (from cropped square)
+            0, 0, sw, sh                      // Destination rectangle
+          );
+
+          return canvas.toDataURL('image/png');
+        };
+
+        // Step 3: Extract each section
+        // Positions in the 9-grid:
+        // (0,0)          | (cornerSize, 0)        | (cornerSize+edgeSize, 0)
+        // (0, cornerSize)| (cornerSize, cornerSize)| (cornerSize+edgeSize, cornerSize)
+        // (0, cornerSize+edgeSize) | (cornerSize, cornerSize+edgeSize) | ...
+
+        const front = extractSection(
+          cornerSize,
+          cornerSize,
+          edgeSize,
+          edgeSize
+        );
+
+        const top = extractSection(
+          cornerSize,
+          0,
+          edgeSize,
+          cornerSize
+        );
+
+        const bottom = extractSection(
+          cornerSize,
+          cornerSize + edgeSize,
+          edgeSize,
+          cornerSize
+        );
+
+        const left = extractSection(
+          0,
+          cornerSize,
+          cornerSize,
+          edgeSize
+        );
+
+        const right = extractSection(
+          cornerSize + edgeSize,
+          cornerSize,
+          cornerSize,
+          edgeSize
+        );
+
+        resolve({
+          front,
+          top,
+          bottom,
+          left,
+          right
+        });
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = imageUrl;
+  });
 }

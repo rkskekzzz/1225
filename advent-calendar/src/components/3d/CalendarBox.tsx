@@ -1,13 +1,15 @@
 import { useCalendarStore } from '@/store';
 import { Door } from './Door';
 import { useTexture } from '@react-three/drei';
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { processImageForBox, ProcessedBoxTextures } from '@/utils/imageProcessing';
 import * as THREE from 'three';
 
 const FALLBACK_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 export function CalendarBox() {
   const { mainImage, doorShape } = useCalendarStore();
+  const [processedTextures, setProcessedTextures] = useState<ProcessedBoxTextures | null>(null);
 
   // Box dimensions
   const width = 30;
@@ -20,58 +22,77 @@ export function CalendarBox() {
   const cellWidth = width / cols;
   const cellHeight = height / rows;
 
-  // Load main image texture
-  const textureUrl = mainImage || FALLBACK_TEXTURE;
-  const baseTexture = useTexture(textureUrl);
+  // Process the main image into box textures
+  useEffect(() => {
+    if (!mainImage) {
+      setProcessedTextures(null);
+      return;
+    }
 
-  // Create textures for each side of the box
-  const sideTextures = useMemo(() => {
-    if (!mainImage) return null;
+    console.log('Processing main image:', mainImage);
+    processImageForBox(mainImage)
+      .then((textures: ProcessedBoxTextures) => {
+        console.log('Processed textures:', textures);
+        setProcessedTextures(textures);
+      })
+      .catch((error: Error) => {
+        console.error('Failed to process image:', error);
+        setProcessedTextures(null);
+      });
+  }, [mainImage]);
 
-    // For seamless continuity with the front face:
-    // Front doors use the full image (0 to 1 in UV space)
-    // Each side should use a thin strip from the corresponding edge
-    // So the pixels match perfectly at the boundaries
+  // Load textures from processed data URLs
+  const rawFrontTexture = useTexture(processedTextures?.front || FALLBACK_TEXTURE);
+  const rawTopTexture = useTexture(processedTextures?.top || FALLBACK_TEXTURE);
+  const rawBottomTexture = useTexture(processedTextures?.bottom || FALLBACK_TEXTURE);
+  const rawLeftTexture = useTexture(processedTextures?.left || FALLBACK_TEXTURE);
+  const rawRightTexture = useTexture(processedTextures?.right || FALLBACK_TEXTURE);
 
-    const top = baseTexture.clone();
-    const bottom = baseTexture.clone();
-    const left = baseTexture.clone();
-    const right = baseTexture.clone();
+  // Apply texture filtering
+  const frontTexture = useMemo(() => {
+    const t = rawFrontTexture.clone();
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = 16;
+    t.needsUpdate = true;
+    return t;
+  }, [rawFrontTexture]);
 
-    // Top side: Take a horizontal strip from the TOP of the image
-    // This matches the top row of front doors
-    // Use full width (0 to 1) but only a thin vertical slice from top
-    top.wrapS = THREE.RepeatWrapping;
-    top.wrapT = THREE.ClampToEdgeWrapping;
-    top.repeat.set(1, 1); // Will stretch the thin strip across the depth
-    top.offset.set(0, 0.99); // Take from very top
-    top.rotation = 0;
-    top.center.set(0.5, 0.5);
-    top.needsUpdate = true;
+  const topTexture = useMemo(() => {
+    const t = rawTopTexture.clone();
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = 16;
+    t.needsUpdate = true;
+    return t;
+  }, [rawTopTexture]);
 
-    // Bottom side: Take from BOTTOM of the image
-    bottom.wrapS = THREE.RepeatWrapping;
-    bottom.wrapT = THREE.ClampToEdgeWrapping;
-    bottom.repeat.set(1, 1);
-    bottom.offset.set(0, 0); // Take from very bottom
-    bottom.needsUpdate = true;
+  const bottomTexture = useMemo(() => {
+    const t = rawBottomTexture.clone();
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = 16;
+    t.needsUpdate = true;
+    return t;
+  }, [rawBottomTexture]);
 
-    // Left side: Take a vertical strip from the LEFT of the image
-    left.wrapS = THREE.ClampToEdgeWrapping;
-    left.wrapT = THREE.RepeatWrapping;
-    left.repeat.set(1, 1);
-    left.offset.set(0, 0); // Take from very left
-    left.needsUpdate = true;
+  const leftTexture = useMemo(() => {
+    const t = rawLeftTexture.clone();
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = 16;
+    t.needsUpdate = true;
+    return t;
+  }, [rawLeftTexture]);
 
-    // Right side: Take from RIGHT of the image
-    right.wrapS = THREE.ClampToEdgeWrapping;
-    right.wrapT = THREE.RepeatWrapping;
-    right.repeat.set(1, 1);
-    right.offset.set(0.99, 0); // Take from very right
-    right.needsUpdate = true;
-
-    return { top, bottom, left, right };
-  }, [mainImage, baseTexture]);
+  const rightTexture = useMemo(() => {
+    const t = rawRightTexture.clone();
+    t.minFilter = THREE.LinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = 16;
+    t.needsUpdate = true;
+    return t;
+  }, [rawRightTexture]);
 
   // Generate 25 doors
   const doors = Array.from({ length: 25 }, (_, i) => {
@@ -84,15 +105,15 @@ export function CalendarBox() {
     // Cell center offset
     const x = -width/2 + col * cellWidth + cellWidth/2;
     const y = height/2 - row * cellHeight - cellHeight/2;
-    const z = depth / 2; // On the front face
+    const z = depth / 2 + 0.01; // Slightly in front of the box face to prevent Z-fighting
 
     return (
       <Door
         key={day}
         day={day}
         position={[x, y, z]}
-        size={[cellWidth, cellHeight, 0.5]} // Door thickness 0.5
-        mainImageUrl={mainImage}
+        size={[cellWidth, cellHeight, 0.02]} // Door thickness 0.02 (very thin)
+        frontTexture={frontTexture}
         shape={doorShape}
       />
     );
@@ -107,13 +128,13 @@ export function CalendarBox() {
           Box material array order:
           0: +X (right), 1: -X (left), 2: +Y (top), 3: -Y (bottom), 4: +Z (front), 5: -Z (back)
         */}
-        {sideTextures ? (
+        {processedTextures ? (
           <>
-            <meshStandardMaterial attach="material-0" map={sideTextures.right} />
-            <meshStandardMaterial attach="material-1" map={sideTextures.left} />
-            <meshStandardMaterial attach="material-2" map={sideTextures.top} />
-            <meshStandardMaterial attach="material-3" map={sideTextures.bottom} />
-            <meshStandardMaterial attach="material-4" color="#5c3a21" /> {/* Front - covered by doors */}
+            <meshStandardMaterial attach="material-0" map={rightTexture} />
+            <meshStandardMaterial attach="material-1" map={leftTexture} />
+            <meshStandardMaterial attach="material-2" map={topTexture} />
+            <meshStandardMaterial attach="material-3" map={bottomTexture} />
+            <meshStandardMaterial attach="material-4" map={frontTexture} /> {/* Front - shows image in gaps */}
             <meshStandardMaterial attach="material-5" color="#5c3a21" /> {/* Back */}
           </>
         ) : (
@@ -126,4 +147,3 @@ export function CalendarBox() {
     </group>
   );
 }
-
