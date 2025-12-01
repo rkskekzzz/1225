@@ -106,10 +106,8 @@ export function CalendarBox() {
       return;
     }
 
-    console.log("Processing main image:", mainImage);
     processImageForBox(mainImage)
       .then((textures: ProcessedBoxTextures) => {
-        console.log("Processed textures:", textures);
         setProcessedTextures(textures);
       })
       .catch((error: Error) => {

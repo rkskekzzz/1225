@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
       }
     } catch (supabaseError) {
       // Supabase 연결 실패 시 로컬 계정으로 fallback
-      console.log("Supabase 연결 실패, 로컬 계정으로 시도합니다.");
     }
 
     // 2. Supabase에서 찾지 못했거나 연결 실패 시 로컬 계정 확인
