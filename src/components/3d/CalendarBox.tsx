@@ -88,6 +88,12 @@ export function CalendarBox() {
   const [minZoom, setMinZoom] = useState(getMinZoom);
   const maxZoom = 80;
 
+  // Keep zoom in a ref for event handlers to avoid re-binding listeners
+  const zoomRef = useRef(zoom);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
   // Box dimensions
   const width = 30;
   const height = 30;
@@ -213,10 +219,20 @@ export function CalendarBox() {
   // Mouse event handlers
   useEffect(() => {
     const canvas = gl.domElement;
+
+    // Drag state
     let dragStartPos = { x: 0, y: 0 };
     let hasMoved = false;
 
+    // Pinch zoom state
+    const pinchStartDist = useRef<number | null>(null);
+    const pinchStartZoom = useRef<number | null>(null);
+    const isPinching = useRef(false);
+
     const handlePointerDown = (e: PointerEvent) => {
+      // 핀치 줌 중이면 회전 시작하지 않음
+      if (isPinching.current) return;
+
       dragStartPos = { x: e.clientX, y: e.clientY };
       hasMoved = false;
       setIsDragging(true);
@@ -226,6 +242,11 @@ export function CalendarBox() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+      // 핀치 줌 중이면 회전하지 않음
+      if (isPinching.current) {
+        setIsDragging(false);
+        return;
+      }
       if (!isDragging) return;
 
       const deltaX = e.clientX - previousMousePosition.current.x;
@@ -263,10 +284,56 @@ export function CalendarBox() {
       });
     };
 
-    // 터치 이벤트 - 드래그 중일 때만 스크롤 방지
+    // 터치 이벤트 - 핀치 줌 처리
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        isPinching.current = true;
+        setIsDragging(false); // 핀치 시작하면 드래그(회전) 중지
+
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const dist = Math.hypot(
+          touch1.clientX - touch2.clientX,
+          touch1.clientY - touch2.clientY
+        );
+
+        pinchStartDist.current = dist;
+        pinchStartZoom.current = zoomRef.current; // Use ref instead of state
+        lastInteractionTime.current = Date.now();
+        setIsIdle(false);
+      }
+    };
+
     const handleTouchMove = (e: TouchEvent) => {
-      if (isDragging) {
+      if (isPinching.current && e.touches.length === 2) {
         e.preventDefault();
+
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const dist = Math.hypot(
+          touch1.clientX - touch2.clientX,
+          touch1.clientY - touch2.clientY
+        );
+
+        if (pinchStartDist.current && pinchStartZoom.current) {
+          // 거리가 멀어지면(dist 증가) 줌인(zoom 값 감소)
+          // 거리가 가까워지면(dist 감소) 줌아웃(zoom 값 증가)
+          const scale = pinchStartDist.current / dist;
+          const newZoom = pinchStartZoom.current * scale;
+
+          setZoom(Math.max(minZoom, Math.min(maxZoom, newZoom)));
+          lastInteractionTime.current = Date.now();
+        }
+      } else if (isDragging) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        isPinching.current = false;
+        pinchStartDist.current = null;
+        pinchStartZoom.current = null;
       }
     };
 
@@ -275,7 +342,10 @@ export function CalendarBox() {
     canvas.addEventListener("pointerup", handlePointerUp);
     canvas.addEventListener("pointerleave", handlePointerUp);
     canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
     canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+    canvas.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       canvas.removeEventListener("pointerdown", handlePointerDown);
@@ -283,9 +353,12 @@ export function CalendarBox() {
       canvas.removeEventListener("pointerup", handlePointerUp);
       canvas.removeEventListener("pointerleave", handlePointerUp);
       canvas.removeEventListener("wheel", handleWheel);
+
+      canvas.removeEventListener("touchstart", handleTouchStart);
       canvas.removeEventListener("touchmove", handleTouchMove);
+      canvas.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging, gl.domElement, minZoom, maxZoom]);
+  }, [isDragging, gl.domElement, minZoom, maxZoom]); // Removed zoom from dependencies
 
   // Apply rotation to the group with idle animation
   useFrame((state) => {
