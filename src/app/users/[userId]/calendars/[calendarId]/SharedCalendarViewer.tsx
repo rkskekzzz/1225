@@ -21,6 +21,7 @@ interface CalendarData {
   userId: string;
   title: string;
   mainImage: string | null;
+  backgroundImage: string | null;
   dayImages: Record<number, string>;
   dayMemos: Record<number, string>;
   doorShape: "square" | "circle";
@@ -37,7 +38,7 @@ export default function SharedCalendarViewer({
   userId,
   calendarId,
 }: SharedCalendarViewerProps) {
-  const { loadConfig, setPreviewMode } = useCalendarStore();
+  const { loadConfig, setPreviewMode, backgroundImage } = useCalendarStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export default function SharedCalendarViewer({
 
         loadConfig({
           mainImage: data.calendar.mainImage,
+          backgroundImage: data.calendar.backgroundImage,
           dayImages: data.calendar.dayImages || {},
           dayMemos: data.calendar.dayMemos || {},
           doorShape: data.calendar.doorShape,
@@ -180,26 +182,28 @@ export default function SharedCalendarViewer({
         </div>
 
         {/* Image Credit */}
-        <div className="fixed bottom-20 right-4 md:bottom-28 md:right-6 z-30 text-xs text-white/60 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg">
-          사진:{" "}
-          <a
-            href="https://unsplash.com/ko/%EC%82%AC%EC%A7%84/%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4-%ED%8A%B8%EB%A6%AC%EC%97%90-%EC%8B%B8%EA%B5%AC%EB%A0%A4%EC%9D%98-%EA%B7%BC%EC%A0%91-%EC%B4%AC%EC%98%81-%EC%82%AC%EC%A7%84-SUTfFCAHV_A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/80 hover:text-white underline transition-colors"
-          >
-            Unsplash
-          </a>
-          의{" "}
-          <a
-            href="https://unsplash.com/ko/@chadmadden?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/80 hover:text-white underline transition-colors"
-          >
-            Chad Madden
-          </a>
-        </div>
+        {!backgroundImage && (
+          <div className="fixed bottom-20 right-4 md:bottom-28 md:right-6 z-30 text-xs text-white/60 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg">
+            사진:{" "}
+            <a
+              href="https://unsplash.com/ko/%EC%82%AC%EC%A7%84/%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4-%ED%8A%B8%EB%A6%AC%EC%97%90-%EC%8B%B8%EA%B5%AC%EB%A0%A4%EC%9D%98-%EA%B7%BC%EC%A0%91-%EC%B4%AC%EC%98%81-%EC%82%AC%EC%A7%84-SUTfFCAHV_A?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/80 hover:text-white underline transition-colors"
+            >
+              Unsplash
+            </a>
+            의{" "}
+            <a
+              href="https://unsplash.com/ko/@chadmadden?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/80 hover:text-white underline transition-colors"
+            >
+              Chad Madden
+            </a>
+          </div>
+        )}
 
         {/* 3D Scene */}
         <div className="absolute inset-0 z-0">
